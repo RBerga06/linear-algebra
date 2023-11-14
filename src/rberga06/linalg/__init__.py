@@ -4,3 +4,4 @@
 """Linear algebra."""
 from .abstract import C, R, AVec
 from .vector import Vec, vec
+from .matrix import Mat, mat, gauss

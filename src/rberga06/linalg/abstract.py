@@ -25,6 +25,12 @@ class AVec[K: (C, R)](Protocol):
     def __rmul__(self, k: K) -> Self:
         return self * k  # type: ignore
 
+    def __sub__(self, v: Self, /) -> Self:
+        return self + (-v)  # type: ignore
+
+    def __truediv__(self, k: K, /) -> Self:
+        return self * (1/k)  # type: ignore
+
     def __pos__(self, /) -> Self:
         """+ self"""
         return self
