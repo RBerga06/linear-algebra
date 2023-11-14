@@ -12,4 +12,8 @@ def indices(len: int, i: int | slice | Iterable[int | slice], /) -> tuple[int, .
         return tuple(range(*i.indices(len)))
     return tuple(chain.from_iterable([indices(len, j) for j in i]))
 
-__all__ = ["indices"]
+def indices_compl(len: int, i: int | slice | Iterable[int | slice], /) -> tuple[int, ...]:
+    """Complement of `indices`. Order does not matter here."""
+    return tuple(set(range(len)) - set(indices(len, i)))
+
+__all__ = ["indices", "indices_compl"]

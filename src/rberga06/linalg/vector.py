@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Concrete vectors (we all know and love)."""
-from typing import Any, Iterable, Iterator, Literal, Self, final, overload, override
+from typing import Any, Iterable, Iterator, Literal, Self, cast, final, overload, override
 
 from .utils import indices
 from .abstract import C, R, AVec
@@ -89,6 +89,20 @@ class Vec[K: (C, R)](AVec[K]):
         if isinstance(k, int):
             return self.__v[k]
         return type(self)((self.__v[i] for i in indices(self.n, k)), orient=self.orient)
+
+    @overload
+    def __setitem__(self, k: int, v: K, /) -> None: ...
+    @overload
+    def __setitem__(self, k: slice | Iterable[int | slice], v: Iterable[K], /) -> None: ...
+    def __setitem__(self, k: int | slice | Iterable[int | slice], v: K | Iterable[K], /) -> None:
+        if isinstance(k, int):
+            self.__v[k] = cast(K, v)
+        else:
+            if v is self:
+                # Copy the vector to avoid setting items before getting them
+                v = self.copy()
+            for i, x in zip(indices(self.n, k), cast(Iterable[K], v)):
+                self.__v[i] = x
 
     # --- Other special methods ---
 
