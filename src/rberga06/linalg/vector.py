@@ -53,11 +53,11 @@ class Vec[K: (C, R)](AVec[K]):
     def __eq__(self, v: Any) -> bool:
         if not isinstance(v, Vec):
             return False
-        return self.__v == [*v]
+        return self.__v == cast(Vec[K], v).__v
 
     @override
     def __sum__(self, v: Self) -> Self:
-        return type(self)(map(sum, zip(self.__v, v)), orient=self.orient)
+        return type(self)(map(sum, zip(self.__v, v.__v)), orient=self.orient)
 
     @override
     def __mul__(self, k: K) -> Self:
