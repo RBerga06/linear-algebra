@@ -36,10 +36,16 @@ class Vec[K: (C, R)](AVec[K]):
     def null(cls, len: int, /) -> Self:
         return cls.fill(0, len)
 
-    # --- Iterators ---
+    def copy(self, /) -> Self:
+        return type(self)(self.__v, orient=self.orient)
 
-    def __iter__(self, /) -> Iterator[K]:
-        return iter(self.__v)
+    @property
+    def T(self, /) -> Self:
+        return type(self)(self.__v, orient="h" if self.orient == "v" else "v")
+
+    def as_complex(self: "Vec[R]", /) -> "Vec[C]":
+        """Interpret this (real) vector as a complex vector."""
+        return self  # type: ignore
 
     # --- AVec implementation ---
 
@@ -51,16 +57,27 @@ class Vec[K: (C, R)](AVec[K]):
 
     @override
     def __sum__(self, v: Self) -> Self:
-        return type(self)(map(sum, zip(self.__v, v)))
+        return type(self)(map(sum, zip(self.__v, v)), orient=self.orient)
 
     @override
     def __mul__(self, k: K) -> Self:
-        return type(self)(x*k for x in self.__v)
+        return type(self)((x*k for x in self.__v), orient=self.orient)
 
     # --- Concatenation ---
 
-    def __or__(self, v: Self) -> Self:
-        return type(self)((*self.__v, *v))
+    def __or__(self, v: K | Self) -> Self:
+        """Concatenate `v` to the right."""
+        if isinstance(v, Vec):
+            return type(self)((*self.__v, *v), orient=self.orient)
+        if isinstance(v, complex | float | int):  # type: ignore[reportUnnecessaryIsinstance]
+            return type(self)((*self.__v, v), orient=self.orient)
+        return NotImplemented
+
+    def __ror__(self, v: K, /) -> Self:
+        """Concatenate `v` to the left."""
+        if isinstance(v, complex | float | int):  # type: ignore[reportUnnecessaryIsinstance]
+            return type(self)((v, *self.__v), orient=self.orient)
+        return NotImplemented
 
     # --- Indexing ---
 
@@ -71,9 +88,19 @@ class Vec[K: (C, R)](AVec[K]):
     def __getitem__(self, k: int | slice | Iterable[int | slice], /) -> K | Self:
         if isinstance(k, int):
             return self.__v[k]
-        return type(self)(self.__v[i] for i in indices(self.n, k))
+        return type(self)((self.__v[i] for i in indices(self.n, k)), orient=self.orient)
 
     # --- Other special methods ---
+
+    def __iter__(self, /) -> Iterator[K]:
+        return iter(self.__v)
+
+    def __bool__(self, /) -> bool:
+        """self != Vec.null(self.n)"""
+        return self.__v != [0]*self.n
+
+    def __len__(self, /) -> int:
+        return self.n
 
     @override
     def __repr__(self, /) -> str:
