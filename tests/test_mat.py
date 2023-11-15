@@ -19,7 +19,7 @@ class TestMat:
         assert m.without[::2,1::2] == Mat([[4, 6]])  # don't select even rows and odd columns
 
     def test_setitem(self, /) -> None:
-        m = Mat([[i+5*j for j in range(5)] for i in range(5)])
+        m = Mat([[5*i+j for j in range(5)] for i in range(5)])
         m0 = m.copy()  # save for later
         m[0,0] = 12
         assert m[0,0] == 12
@@ -28,6 +28,13 @@ class TestMat:
         m[0,0] -= 12
         assert m[0,0] == 0
         m *= 2
-        assert m == Mat([[2*i+10*j for j in range(5)] for i in range(5)])
+        assert m == Mat([[10*i+2*j for j in range(5)] for i in range(5)])
         m -= (m/2)
         assert m == m0
+        m[0,:] -= Vec(range(5), orient="h")
+        assert not m[0,:]           # make sure the first row is now all 0s
+        assert m[1:,:] == m0[1:,:]  # make sure no other row was changed
+        m = m0.copy()
+        m[0,:] *= 2
+        assert m[0,:] == 2*m0[0,:]  # make sure the first row was doubled
+        assert m[1:,:] == m0[1:,:]  # make sure no other row was changed

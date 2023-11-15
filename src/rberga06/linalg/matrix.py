@@ -148,9 +148,13 @@ class Mat[K: (C, R)](AVec[K]):
         ii, jj = key
         if isinstance(ii, int):
             if isinstance(jj, int):
+                # a single cell was selected
                 return self.__m[ii][jj]
-            return Vec([self.__m[ii][j] for j in indices(self.n, jj)], orient="h")
+            # a single row was selected
+            _r = self.__m[ii]  # minimal performance advantage
+            return Vec([_r[j] for j in indices(self.n, jj)], orient="h")
         if isinstance(jj, int):
+            # a single column was selected
             return Vec([self.__m[i][jj] for i in indices(self.m, ii)], orient="v")
         return type(self)([[self.__m[i][j] for j in indices(self.n, jj)] for i in indices(self.m, ii)])
 
