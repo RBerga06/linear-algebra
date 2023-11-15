@@ -122,7 +122,7 @@ class Vec[K: (C, R)](AVec[K]):
 
 
 
-def vec[K: (R, C)](v: Vec[K] | Iterable[K] | K) -> Vec[K]:
+def vec[K: (R, C)](v: Vec[K] | Iterable[K] | K, /) -> Vec[K]:
     """Convert the argument into a `Vec[K]`, unless it's already a `Vec[K]`."""
     if isinstance(v, Vec):
         return v

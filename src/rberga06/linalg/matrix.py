@@ -239,6 +239,12 @@ class Mat[K: (C, R)](AVec[K]):
         m = self.gauss()
         return reduce(mul, [m.__m[i][i] for i in range(self.n)])
 
+    def Tr(self, /) -> K:
+        """Evaluate the trace."""
+        if self.n != self.m:
+            raise ValueError("The trace is not defined for a non-square matrix.")
+        return sum([self.__m[i][i] for i in range(self.n)])  # type: ignore
+
     @property
     def invertible(self, /) -> bool:
         if self.n != self.m:  # non-square matrices cannot be invertible
