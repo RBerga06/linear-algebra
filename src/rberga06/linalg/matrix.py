@@ -285,24 +285,4 @@ def mat[K: (R, C)](m: K | Vec[K] | Iterable[K] | Mat[K] | Iterable[Iterable[K]],
     return Mat.from_cols([it])  # type: ignore
 
 
-def gauss[K: (R, C)](M: Mat[K], /) -> Mat[K]:
-    # Se la matrice è nulla, abbiamo finito
-    if not M:
-        return M
-    # Se la prima colonna è nulla, ignorala
-    if not M[:,0]:
-        return M[:,0] | gauss(M[:,1:])
-    # Fintanto che il primo elemento è uno 0, scambia la prima riga con un'altra
-    i = 1
-    while not M[0,0]:
-        M[(0,i),:] = M[(i,0),:]  # swap rows
-        i += 1
-    # Ora il primo elemento è sicuramente un perno. Sottraiamo le volte necessarie ogni riga
-    r = M[0,:]/M[0,0]
-    for i in range(1, M.m):
-        M[i,:] -= r * M[i,0]
-    # Ora la prima colonna è tutta di zeri (a parte il perno): procedi senza prima riga e prima colonna
-    return M[0,:] & (M[1:,0] | gauss(M[1:,1:]))
-
-
-__all__ = ["Mat", "mat", "gauss"]
+__all__ = ["Mat", "mat"]
