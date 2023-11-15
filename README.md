@@ -29,7 +29,7 @@ m1[:,0]  # select the first column
 # select the first (0) and third (2) elements
 #   of the even (::2) rows:
 m1[::2,(0,2)]
-#   or, equivalently (since m[::2,:] is a Vec):
+#   or, equivalently (since m[::2,:] is another Mat):
 m1[::2,:][0,2]
 ```
 
