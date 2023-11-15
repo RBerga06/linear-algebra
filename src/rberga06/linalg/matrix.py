@@ -212,31 +212,37 @@ class Mat[K: (C, R)](AVec[K]):
 
     # --- Matrix-specific operations ---
 
-    def gauss(self, /) -> "Mat[K]":
+    def gauss(self, /) -> tuple["Mat[K]", tuple[K, ...]]:
         """Run the Gauss algorithm (always returns a new matrix)."""
         # Se la matrice è nulla, abbiamo finito
         if not self:
-            return self.copy()
+            return self.copy(), ()
         # Se la prima colonna è nulla, saltala
         if not self[:,0]:
-            return self[:,0] | self[:,1:].gauss()
+            m, ps = self[:,1:].gauss()
+            return self[:,0] | m, ps
         # Fintanto che il primo elemento è uno 0, scambia la prima riga con un'altra
         i = 1
         while not self[0,0]:
             self[(0,i),:] = self[(i,0),:]  # scambia le righe 0 e i
             i += 1
         # Ora il primo elemento è sicuramente un perno. Sottraiamo le volte necessarie ogni riga
-        r = self[0,:]/self[0,0]
+        p = self[0,0]
+        r = self[0,:]/p
         for i in range(1, self.m):
             self[i,:] -= r * self[i,0]
         # Ora la prima colonna è tutta di zeri (a parte il perno): procedi senza prima riga e prima colonna
-        return self[0,:] & (self[1:,0] | self[1:,1:].gauss())
+        m, ps = self[1:,1:].gauss()
+        return (self[0,:] & (self[1:,0] | m)), (p,) + ps
+
+    def rg(self, /) -> int:
+        return len(self.gauss()[1])
 
     def det(self, /) -> K:
         """Evaluate the determinant."""
         if self.n != self.m:
             raise ValueError("The determinant is not defined for a non-square matrix.")
-        m = self.gauss()
+        m, _ = self.gauss()
         return reduce(mul, [m.__m[i][i] for i in range(self.n)])
 
     def Tr(self, /) -> K:
@@ -249,7 +255,7 @@ class Mat[K: (C, R)](AVec[K]):
     def invertible(self, /) -> bool:
         if self.n != self.m:  # non-square matrices cannot be invertible
             return False
-        return self.det() != 0
+        return self.rg() == self.m
 
     @property
     def inverse(self, /) -> "Mat[K]":
