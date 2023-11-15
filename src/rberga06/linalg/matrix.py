@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Matrices!"""
+from dataclasses import dataclass
+from functools import reduce
+from operator import mul
 from typing import Any, Iterable, Iterator, Self, cast, final, overload, override
 
-from .utils import indices
+from .utils import indices, indices_compl
 from .abstract import C, R, AVec
 from .vector import Vec
 
@@ -100,6 +103,13 @@ class Mat[K: (C, R)](AVec[K]):
     def __mul__(self, k: K, /) -> Self:
         return type(self)([[x*k for x in r] for r in self.__m])
 
+    # --- Matrix multiplication ---
+
+    def __matmul__(self, m: Self, /) -> Self:
+        return type(self)([
+            [sum([self.__m[i][k] * m.__m[k][j] for k in range(self.n)]) for j in range(m.n)] for i in range(self.m)
+        ])
+
     # --- Concatenation ---
 
     def __or__(self, m: Self | Vec[K], /) -> Self:
@@ -171,6 +181,10 @@ class Mat[K: (C, R)](AVec[K]):
                 for j, x in zip(indices(self.n, jj), row):
                     self.__m[i][j] = x
 
+    @property
+    def without(self, /) -> "_MatWithoutAccessHelper[K]":
+        return _MatWithoutAccessHelper(self)
+
     # --- Other special methods ---
 
     def __iter__(self, /) -> Iterator[Vec[K]]:
@@ -191,6 +205,66 @@ class Mat[K: (C, R)](AVec[K]):
             "⎢" + "\t".join(map(repr, self.__m[ i])) + "\t⎢" for i in range(1, self.m - 1)],
             "⎣" + "\t".join(map(repr, self.__m[-1])) + "\t⎦",
         ])
+
+    # --- Matrix-specific operations ---
+
+    def gauss(self, /) -> "Mat[K]":
+        """Run the Gauss algorithm (always returns a new matrix)."""
+        # Se la matrice è nulla, abbiamo finito
+        if not self:
+            return self.copy()
+        # Se la prima colonna è nulla, saltala
+        if not self[:,0]:
+            return self[:,0] | self[:,1:].gauss()
+        # Fintanto che il primo elemento è uno 0, scambia la prima riga con un'altra
+        i = 1
+        while not self[0,0]:
+            self[(0,i),:] = self[(i,0),:]  # scambia le righe 0 e i
+            i += 1
+        # Ora il primo elemento è sicuramente un perno. Sottraiamo le volte necessarie ogni riga
+        r = self[0,:]/self[0,0]
+        for i in range(1, self.m):
+            self[i,:] -= r * self[i,0]
+        # Ora la prima colonna è tutta di zeri (a parte il perno): procedi senza prima riga e prima colonna
+        return self[0,:] & (self[1:,0] | self[1:,1:].gauss())
+
+    def det(self, /) -> K:
+        """Evaluate the determinant."""
+        if self.n != self.m:
+            raise ValueError("The determinant is not defined for a non-square matrix.")
+        m = self.gauss()
+        return reduce(mul, [m.__m[i][i] for i in range(self.n)])
+
+    @property
+    def invertible(self, /) -> bool:
+        if self.n != self.m:  # non-square matrices cannot be invertible
+            return False
+        return self.det() != 0
+
+    @property
+    def inverse(self, /) -> "Mat[K]":
+        """The inverse matrix (if self is invertible)"""
+        if not self.invertible:
+            raise ValueError("Cannot find the inverse of a non-invertible matrix.")
+        return Mat[K]([[(((i+j)%2)*2-1)*self.without[i,j].det()/self.det() for j in range(self.n)] for i in range(self.m)])
+
+
+@final
+@dataclass(slots=True, frozen=True)
+class _MatWithoutAccessHelper[K: (C, R)]:
+    mat: Mat[K]
+
+    def __getitem__(self, key: tuple[int | slice | Iterable[int | slice], int | slice | Iterable[int | slice]]) -> Mat[K]:
+        i, j = key
+        return self.mat[indices_compl(self.mat.m, i), indices_compl(self.mat.n, j)]
+
+    def __setitem__(
+        self,
+        key: tuple[int | slice | Iterable[int | slice], int | slice | Iterable[int | slice]],
+        val: Iterable[Iterable[K]],
+    /) -> None:
+        i, j = key
+        self.mat[indices_compl(self.mat.m, i),indices_compl(self.mat.n, j)] = val
 
 
 def mat[K: (R, C)](m: K | Vec[K] | Iterable[K] | Mat[K] | Iterable[Iterable[K]], /) -> Mat[K]:
