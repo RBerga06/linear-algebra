@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """(Abstract) Vector Spaces."""
 from abc import abstractmethod
-from typing import Any, Protocol, Self, override
+from typing import Any, Protocol, Self, cast, override
 
 type R = float    # real field
 type C = complex  # complex field
@@ -20,16 +20,16 @@ class AVec[K: (C, R)](Protocol):
     def __mul__(self, k: K, /) -> Self: ...
 
     def __rsum__(self, v: Self) -> Self:
-        return self * v  # type: ignore
+        return self.__sum__(v)
 
     def __rmul__(self, k: K) -> Self:
-        return self * k  # type: ignore
+        return self.__mul__(k)
 
     def __sub__(self, v: Self, /) -> Self:
-        return self + (-v)  # type: ignore
+        return self.__sum__(v.__neg__())
 
     def __truediv__(self, k: K, /) -> Self:
-        return self * (1/k)  # type: ignore
+        return self.__mul__(1/k)
 
     def __pos__(self, /) -> Self:
         """+ self"""
@@ -37,7 +37,7 @@ class AVec[K: (C, R)](Protocol):
 
     def __neg__(self, /) -> Self:
         """- self"""
-        return self * -1  # type: ignore
+        return self.__mul__(cast(K, -1))
 
 
 __all__ = [

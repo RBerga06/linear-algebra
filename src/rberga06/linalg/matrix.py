@@ -97,7 +97,7 @@ class Mat[K: (C, R)](AVec[K]):
 
     @override
     def __sum__(self, m: Self, /) -> Self:
-        return type(self)([[x1+x2 for x1, x2 in zip(r1, r2)] for r1, r2 in zip(self, m)])
+        return type(self)([[x1+x2 for x1, x2 in zip(r1, r2)] for r1, r2 in zip(self.__m, m.__m)])
 
     @override
     def __mul__(self, k: K, /) -> Self:
@@ -188,7 +188,7 @@ class Mat[K: (C, R)](AVec[K]):
     # --- Other special methods ---
 
     def __iter__(self, /) -> Iterator[Vec[K]]:
-        return iter(self.cols())
+        return iter(self.rows())
 
     def __bool__(self, /) -> bool:
         """self != Matrix.null(self.m, self.n)"""
